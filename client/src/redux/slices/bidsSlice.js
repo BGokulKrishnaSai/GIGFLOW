@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
-// `api` instance already has baseURL '/api' so use relative '/bids'
-const API_URL = '/bids';
-
+const API_URL = '/api/bids';
 export const createBid = createAsyncThunk(
   'bids/createBid',
   async (bidData, { rejectWithValue }) => {
