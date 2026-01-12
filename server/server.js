@@ -21,27 +21,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 console.log("Setting up CORS...");
-app.use((req, res, next) => {
-  const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app"];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app"],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
   })
 
 
