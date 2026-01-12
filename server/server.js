@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 console.log("Setting up CORS...");
-app.use(
+// Explicit CORS headers\napp.use((req, res, next) => {\n  const allowed = ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app"];\n  if (allowed.includes(req.headers.origin)) res.setHeader("Access-Control-Allow-Origin", req.headers.origin);\n  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");\n  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");\n  res.setHeader("Access-Control-Allow-Credentials", "true");\n  if (req.method === "OPTIONS") return res.sendStatus(200);\n  next();\n});\napp.use(
   cors({
  origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app"],    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
