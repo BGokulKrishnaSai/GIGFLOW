@@ -341,7 +341,7 @@ This project is licensed under the MIT License.
 
 ## 👨‍💻 Author
 
-**Praha** - Full-Stack Developer
+**B Gokul Krishna Sai** - Full-Stack Developer
 
 ---
 
