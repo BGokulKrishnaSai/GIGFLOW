@@ -8,71 +8,55 @@ const connectDB = require("./config/database");
 
 const app = express();
 
-/* =========================
-   DATABASE
-========================= */
+/* ========================= DATABASE ========================= */
 connectDB();
 
-/* =========================
-   MIDDLEWARE
-========================= */
+/* ========================= MIDDLEWARE ========================= */
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 console.log("Setting up CORS...");
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://gigflow-frontend-lcjv.onrender.com",
-       "https://gigflow-api-b177.onrender.com"
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://gigflow-frontend-lcjv.onrender.com"  // Your frontend[web:23]
+];
 
-// Request logging middleware
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+// Request logging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
   next();
 });
 
-/* =========================
-  ROUTES
-========================= */
+/* ========================= ROUTES ========================= */
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/gigs", require("./routes/gigs"));
 app.use("/api/bids", require("./routes/bids"));
 app.use("/api/messages", require("./routes/messages"));
 
-/* =========================
-   HEALTH CHECK
-========================= */
+/* ========================= HEALTH CHECK ========================= */
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "GigFlow API is running 🚀",
+    message: "GigFlow API running 🚀",
     timestamp: new Date().toISOString(),
   });
 });
 
-/* =========================
-   GLOBAL 404 HANDLER
-========================= */
+/* ========================= 404 HANDLER ========================= */
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.originalUrl}`,
-  });
+  res.status(404).json({ success: false, message: `Route not found: ${req.originalUrl}` });
 });
 
-/* =========================
-   GLOBAL ERROR HANDLER
-========================= */
+/* ========================= ERROR HANDLER ========================= */
 app.use((err, req, res, next) => {
   console.error("🔥 Error:", err);
   res.status(err.status || 500).json({
@@ -81,74 +65,47 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* =========================
-   SERVER START
-========================= */
+/* ========================= SERVER START ========================= */
 const PORT = process.env.PORT || 5000;
-
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// === Socket.io setup for real-time notifications ===
-// Enabled for Render
-if (true) {
-  const { Server } = require("socket.io");
+/* ========================= SOCKET.IO (Render Optimized) ========================= */
+const { Server } = require("socket.io");
 
-  const io = new Server(server, {
-    cors: {
-      origin: [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://gigflow-indol.vercel.app",
-        "https://gigflow-api.vercel.app",
-        "https://gigflow-frontend-lcjv.onrender.com",
-      ],
-      methods: ["GET", "POST", "PATCH", "DELETE"],
-      credentials: true,
-      transports: ["websocket", "polling"],
-      allowEIO3: true,
-      pingTimeout: 60000,
-      pingInterval: 25000,
-    },
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    credentials: true,
+    transports: ["websocket", "polling"],
+    pingTimeout: 60000,
+    pingInterval: 25000,
+  },
+});
+
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("join-user-room", (userId) => {
+    if (!userId) return;
+    socket.join(`user_${userId}`);
+    console.log(`Socket ${socket.id} joined user_${userId}`);
   });
 
-  // Attach io instance to the express app so controllers can access it via req.app.get('io')
-  app.set("io", io);
-
-  io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
-
-    socket.on("join-user-room", (userId) => {
-      if (!userId) return;
-      socket.join(`user_${userId}`);
-      console.log(`Socket ${socket.id} joined room user_${userId}`);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
   });
-} else {
-  // Socket.IO disabled in environments that do not support persistent connections
-  console.log("⚠️  Socket.IO disabled (production/serverless environment)");
-  const dummyIo = {
-    on: () => {},
-    emit: () => {},
-    to: () => ({ emit: () => {} }),
-  };
-  app.set("io", dummyIo);
-}
+});
 
-/* =========================
-   PROCESS SAFETY
-========================= */
+/* ========================= PROCESS HANDLERS ========================= */
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
-  // server.close(() => process.exit(1));
 });
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
-  // server.close(() => process.exit(1));
 });
