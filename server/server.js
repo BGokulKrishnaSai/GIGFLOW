@@ -87,6 +87,8 @@ const server = app.listen(PORT, () => {
 });
 
 // === Socket.io setup for real-time notifications ===
+// SOCKET.IO IS DISABLED FOR VERCEL - NOT COMPATIBLE WITH SERVERLESS
+/*
 const { Server } = require('socket.io');
 91
 const io 
@@ -118,6 +120,7 @@ io.on('connection', (socket) => {
     console.log('Socket disconnected:', socket.id);
   });
 });
+*/
 
 /* =========================
    PROCESS SAFETY
