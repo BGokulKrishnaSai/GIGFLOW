@@ -13,8 +13,7 @@ class SocketService {
       console.log('Socket.IO disabled in production');
       return null;
       // DISABLE Socket.IO in production (Vercel) - check by URL
-    const isProduction = window.location.hostname.includes('vercel.app');
-    if (isProduction) {
+    const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');    if (isProduction) {
       console.log('Socket.IO disabled - running on Vercel');
       return null;
     }
