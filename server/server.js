@@ -21,7 +21,7 @@ app.use(cookieParser());
 console.log("Setting up CORS...");
 const allowedOrigins = process.env.CLIENT_URL 
   ? process.env.CLIENT_URL.split(',').map(url => url.trim())
-  : ["https://gigflow-frontend-lcjv.onrender.com", "http://localhost:5174"];
+  : ["http://localhost:5173", "http://localhost:5174"];
 
 console.log("Allowed CORS origins:", allowedOrigins);
 
@@ -36,8 +36,26 @@ app.use(
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`); // Fixed: was backtick, now parentheses
+  console.log(`${req.method} ${req.path}`);
   next();
+});
+
+/* =========================
+   ROOT ROUTE (ADD THIS!)
+========================= */
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "🚀 GigFlow API is running!",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      gigs: "/api/gigs",
+      bids: "/api/bids",
+      messages: "/api/messages"
+    }
+  });
 });
 
 /* =========================
@@ -56,6 +74,7 @@ app.get("/api/health", (req, res) => {
     success: true,
     message: "GigFlow API is running 🚀",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -66,6 +85,13 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.originalUrl}`,
+    availableEndpoints: [
+      "/api/health",
+      "/api/auth",
+      "/api/gigs",
+      "/api/bids",
+      "/api/messages"
+    ]
   });
 });
 
@@ -85,7 +111,7 @@ app.use((err, req, res, next) => {
 ========================= */
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`); // Fixed: was backtick, now parentheses
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 // === Socket.io setup for real-time notifications ===
@@ -104,7 +130,6 @@ const io = new Server(server, {
   },
 });
 
-// Attach io instance to the express app so controllers can access it via req.app.get('io')
 app.set('io', io);
 
 io.on('connection', (socket) => {
@@ -112,8 +137,8 @@ io.on('connection', (socket) => {
   
   socket.on('join-user-room', (userId) => {
     if (!userId) return;
-    socket.join(`user_${userId}`); // Fixed: was backtick, now parentheses
-    console.log(`Socket ${socket.id} joined room user_${userId}`); // Fixed
+    socket.join(`user_${userId}`);
+    console.log(`Socket ${socket.id} joined room user_${userId}`);
   });
   
   socket.on('disconnect', () => {
@@ -126,12 +151,10 @@ io.on('connection', (socket) => {
 ========================= */
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
-  // server.close(() => process.exit(1));
 });
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
-  // server.close(() => process.exit(1));
 });
 
 module.exports = app;
