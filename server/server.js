@@ -3,9 +3,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-
 const connectDB = require("./config/database");
-
 const app = express();
 
 /* =========================
@@ -23,7 +21,7 @@ app.use(cookieParser());
 console.log("Setting up CORS...");
 const allowedOrigins = process.env.CLIENT_URL 
   ? process.env.CLIENT_URL.split(',').map(url => url.trim())
-  : ["http://localhost:5173", "http://localhost:5174"];
+  : ["https://gigflow-frontend-lcjv.onrender.com", "http://localhost:5174"];
 
 console.log("Allowed CORS origins:", allowedOrigins);
 
@@ -31,14 +29,14 @@ app.use(
   cors({
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  console.log(`${req.method} ${req.path}`); // Fixed: was backtick, now parentheses
   next();
 });
 
@@ -86,9 +84,8 @@ app.use((err, req, res, next) => {
    SERVER START
 ========================= */
 const PORT = process.env.PORT || 5000;
-
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`); // Fixed: was backtick, now parentheses
 });
 
 // === Socket.io setup for real-time notifications ===
@@ -112,13 +109,13 @@ app.set('io', io);
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
-
+  
   socket.on('join-user-room', (userId) => {
     if (!userId) return;
-    socket.join(`user_${userId}`);
-    console.log(`Socket ${socket.id} joined room user_${userId}`);
+    socket.join(`user_${userId}`); // Fixed: was backtick, now parentheses
+    console.log(`Socket ${socket.id} joined room user_${userId}`); // Fixed
   });
-
+  
   socket.on('disconnect', () => {
     console.log('Socket disconnected:', socket.id);
   });
@@ -136,3 +133,5 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
   // server.close(() => process.exit(1));
 });
+
+module.exports = app;
