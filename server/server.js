@@ -1,8 +1,8 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const connectDB = require("./config/database");
 
@@ -23,13 +23,16 @@ app.use(cookieParser());
 console.log("Setting up CORS...");
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-frontend-lcjv.onrender.com"]
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://gigflow-frontend-lcjv.onrender.com",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -43,7 +46,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/gigs", require("./routes/gigs"));
 app.use("/api/bids", require("./routes/bids"));
-app.use('/api/messages', require('./routes/messages'));
+app.use("/api/messages", require("./routes/messages"));
 
 /* =========================
    HEALTH CHECK
@@ -87,52 +90,54 @@ const server = app.listen(PORT, () => {
 });
 
 // === Socket.io setup for real-time notifications ===
-// Only enable Socket.IO in local development (not on Vercel)
-if (true) { // Socket.IO enabled for Render { // Socket.IO disabled - not supported on Vercel serverless
+// Enabled for Render
+if (true) {
+  const { Server } = require("socket.io");
 
-const { Server } = require('socket.io');
-91
-const io 
-   = new Server(server, {
-  cors: {
- origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app"],    methods: ["GET", "POST", "PATCH", "DELETE", "https://gigflow-frontend-lcjv.onrender.com"],
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-    credentials: true,
-    transports: ["websocket", "polling"],
-    allowEIO3: true,
-    pingTimeout: 60000,
-    pingInterval: 25000
-  },
-});
-
-// Attach io instance to the express app so controllers can access it via req.app.get('io')
-app.set('io', io);
-
-io.on('connection', (socket) => {
-  console.log('Socket connected:', socket.id);
-
-  socket.on('join-user-room', (userId) => {
-    if (!userId) return;
-    socket.join(`user_${userId}`);
-    console.log(`Socket ${socket.id} joined room user_${userId}`);
+  const io = new Server(server, {
+    cors: {
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://gigflow-indol.vercel.app",
+        "https://gigflow-api.vercel.app",
+        "https://gigflow-frontend-lcjv.onrender.com",
+      ],
+      methods: ["GET", "POST", "PATCH", "DELETE"],
+      credentials: true,
+      transports: ["websocket", "polling"],
+      allowEIO3: true,
+      pingTimeout: 60000,
+      pingInterval: 25000,
+    },
   });
 
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected:', socket.id);
+  // Attach io instance to the express app so controllers can access it via req.app.get('io')
+  app.set("io", io);
+
+  io.on("connection", (socket) => {
+    console.log("Socket connected:", socket.id);
+
+    socket.on("join-user-room", (userId) => {
+      if (!userId) return;
+      socket.join(`user_${userId}`);
+      console.log(`Socket ${socket.id} joined room user_${userId}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected:", socket.id);
+    });
   });
-});
-   } else {
-  // Socket.IO disabled on Vercel - serverless doesn't support persistent connections
-  console.log('⚠️  Socket.IO disabled (production/serverless environment)');
-  // Create a dummy io object so controllers don't break
+} else {
+  // Socket.IO disabled in environments that do not support persistent connections
+  console.log("⚠️  Socket.IO disabled (production/serverless environment)");
   const dummyIo = {
     on: () => {},
     emit: () => {},
-    to: () => ({ emit: () => {} })
+    to: () => ({ emit: () => {} }),
   };
-  app.set('io', dummyIo);
+  app.set("io", dummyIo);
 }
-
 
 /* =========================
    PROCESS SAFETY
