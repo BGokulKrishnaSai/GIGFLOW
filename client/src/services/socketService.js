@@ -1,6 +1,5 @@
-import { io } from 'socket.io-client';
-
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Socket.IO disabled - Vercel serverless doesn't support persistent connections
+// This service is kept as a stub for future migration to a platform that supports WebSockets
 
 class SocketService {
   constructor() {
@@ -8,49 +7,28 @@ class SocketService {
   }
 
   connect(userId) {
-    this.socket = io(SOCKET_URL);
-
-    this.socket.on('error', (error) => {
-      console.warn('Socket.IO error:', error);
-    });
-
-    this.socket.on('connect', () => {
-      console.log('Connected to server');
-      // Join user-specific room for notifications
-      this.socket.emit('join-user-room', userId);
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
-    });
-
-    return this.socket;
+    // Socket.IO disabled for Vercel deployment
+    console.log('Socket.IO is disabled on serverless platform');
+    return null;
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
+    // No-op
   }
 
   getSocket() {
-    return this.socket;
+    return null;
   }
 
-  // Listen for hire notifications
-  onHired(callback) {
-    if (this.socket) {
-      this.socket.on('hired', callback);
-    }
+  // Stub methods for future implementation
+  emit(event, data) {
+    console.log('Socket.IO disabled:', event, data);
   }
 
-  // Remove listeners
-  offHired() {
-    if (this.socket) {
-      this.socket.off('hired');
-    }
+  on(event, callback) {
+    // No-op
   }
 }
 
-export default new SocketService();
+const socketService = new SocketService();
+export default socketService;
