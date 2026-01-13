@@ -224,6 +224,45 @@ socketService.onHired((data) => {
 
 ## 🚀 Deployment
 
+### Quick Deployment to Render
+
+#### Backend Deployment
+1. Push code to GitHub
+2. Create a new Web Service on [Render.com](https://render.com)
+3. Connect your GitHub repo
+4. Set environment variables in Render dashboard:
+   ```
+   NODE_ENV=production
+   MONGODB_URI=<your-mongodb-connection-string>
+   JWT_SECRET=<generate-a-secure-secret>
+   JWT_EXPIRE=7d
+   CLIENT_URL=https://your-frontend-domain.com
+   PORT=10000
+   ```
+5. Build command: `npm install`
+6. Start command: `npm start`
+7. Render will auto-deploy on push to main branch
+
+#### Frontend Deployment
+1. Push code to GitHub
+2. Create a new Static Site on [Render.com](https://render.com)
+3. Connect your GitHub repo
+4. Set build command: `npm install && npm run build`
+5. Publish directory: `dist`
+6. Set environment variable:
+   ```
+   VITE_API_URL=https://your-backend-domain.com/api
+   ```
+7. Render will auto-deploy on push to main branch
+
+#### Environment Variables Configuration
+- Copy `.env.example` to `.env` for local development
+- For production on Render, set environment variables in the Render dashboard (do NOT commit `.env`)
+- The app will auto-detect and use the correct API endpoints based on environment
+
+### Alternative: Using render.yaml
+Optionally, add `render.yaml` to your root directory for IaC-style deployment configuration.
+
 ### Backend Deployment (Railway, Heroku, etc.)
 1. Set environment variables
 2. Deploy server code
@@ -231,7 +270,7 @@ socketService.onHired((data) => {
 
 ### Frontend Deployment (Vercel, Netlify, etc.)
 1. Build the project: `npm run build`
-2. Set API base URL environment variable
+2. Set API base URL environment variable: `VITE_API_URL`
 3. Deploy the `dist` folder
 
 ## 📝 Usage Guide

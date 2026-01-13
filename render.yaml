@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: gigflow-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        value: https://gigflow-frontend-lcjv.onrender.com
+
+  - type: web
+    name: gigflow-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - path: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://gigflow-api-b177.onrender.com/api

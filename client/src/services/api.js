@@ -1,8 +1,21 @@
 import axios from "axios";
 
+// Determine API base URL based on environment
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // For development with Vite proxy
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+  // For production, use full backend URL
+  return `${window.location.protocol}//${window.location.hostname}:${window.location.port || (window.location.protocol === 'https:' ? '443' : '80')}/api`;
+};
+
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: "/api", // proxied by Vite → backend
+  baseURL: getBaseURL(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
