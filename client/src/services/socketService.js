@@ -8,12 +8,7 @@ class SocketService {
   }
 
   connect(userId) {
-    // TEMPORARILY ENABLED FOR DEBUGGING - Socket.IO on Vercel    const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
-    // const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');      console.log('Socket.IO disabled - running on Vercel');
-    // if (isProduction) {    }    this.socket = io(SOCKET_URL);
-    //   console.log('Socket.IO disabled - running on Vercel');        // Handle connection errors gracefully
-    //   return null;      console.warn('Socket.IO connection failed:', error.message);
-    // }    });
+    this.socket = io(SOCKET_URL);
 
     this.socket.on('error', (error) => {
       console.warn('Socket.IO error:', error);
