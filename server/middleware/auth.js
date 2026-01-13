@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// Fix: Export as object with protect property
-exports.protect = async (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     let token;
 
@@ -39,6 +38,6 @@ exports.protect = async (req, res, next) => {
     });
   }
 };
-module.exports = {
-  protect: exports.protect
-};
+
+// ✅ FIXED EXPORT (for your routes)
+module.exports = { protect };
