@@ -5,7 +5,7 @@ const bidService = {
   // Create a new bid
   createBid: async (bidData) => {
     try {
-      const response = await api.post('/bids', bidData)
+      const response = await api.post('/api/bids', bidData)
       return response.data
     } catch (error) {
       throw error.response?.data || { message: 'Failed to create bid' }
@@ -25,7 +25,7 @@ const bidService = {
   // Get user's bids
   getUserBids: async () => {
     try {
-      const response = await api.get('/bids/user/my-bids')
+      const response = await api.get('/api/bids/user/my-bids')
       return response.data
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch your bids' }
@@ -55,7 +55,7 @@ const bidService = {
   // Get bid statistics
   getBidStats: async () => {
     try {
-      const response = await api.get('/bids/user/my-bids')
+      const response = await api.get('/api/bids/user/my-bids')
       const bids = response.data.data || []
       return {
         total: bids.length,

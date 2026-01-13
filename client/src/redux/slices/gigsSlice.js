@@ -1,9 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
-// ❌ DO NOT USE '/api/gigs'
-const API_URL = '/gigs';
-
+const API_URL = '/api/gigs';
 export const fetchGigs = createAsyncThunk(
   'gigs/fetchGigs',
   async (search = '', { rejectWithValue }) => {

@@ -8,18 +8,29 @@ class SocketService {
   }
 
   connect(userId) {
-    this.socket = io(SOCKET_URL);
+    if (!this.socket) {
+      this.socket = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5
+      });
 
-    this.socket.on('connect', () => {
-      console.log('Connected to server');
-      // Join user-specific room for notifications
-      this.socket.emit('join-user-room', userId);
-    });
+      this.socket.on('connect', () => {
+        console.log('Socket connected:', this.socket.id);
+        if (userId) {
+          this.socket.emit('join-user-room', userId);
+        }
+      });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
-    });
+      this.socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
 
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+    }
     return this.socket;
   }
 
@@ -34,19 +45,18 @@ class SocketService {
     return this.socket;
   }
 
-  // Listen for hire notifications
-  onHired(callback) {
+  emit(event, data) {
     if (this.socket) {
-      this.socket.on('hired', callback);
+      this.socket.emit(event, data);
     }
   }
 
-  // Remove listeners
-  offHired() {
+  on(event, callback) {
     if (this.socket) {
-      this.socket.off('hired');
+      this.socket.on(event, callback);
     }
   }
 }
 
-export default new SocketService();
+const socketService = new SocketService();
+export default socketService;
