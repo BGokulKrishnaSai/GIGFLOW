@@ -8,7 +8,24 @@ class SocketService {
   }
 
   connect(userId) {
+        // Disable Socket.IO in production to avoid errors
+    if (import.meta.env.PROD && !import.meta.env.VITE_ENABLE_SOCKET_IO) {
+      console.log('Socket.IO disabled in production');
+      return null;
+    }
+
+
     this.socket = io(SOCKET_URL);
+
+        // Handle connection errors gracefully
+    this.socket.on('connect_error', (error) => {
+      console.warn('Socket.IO connection failed:', error.message);
+      // Silently fail - app continues without real-time features
+    });
+
+    this.socket.on('error', (error) => {
+      console.warn('Socket.IO error:', error);
+    });
 
     this.socket.on('connect', () => {
       console.log('Connected to server');
