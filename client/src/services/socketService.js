@@ -8,16 +8,12 @@ class SocketService {
   }
 
   connect(userId) {
-        // Disable Socket.IO in production to avoid errors
-    if (import.meta.env.PROD && !import.meta.env.VITE_ENABLE_SOCKET_IO) {
-      console.log('Socket.IO disabled in production');
-      return null;
-      // DISABLE Socket.IO in production (Vercel) - check by URL
-    const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');    if (isProduction) {
+    // DISABLE Socket.IO on Vercel by URL check
+    const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    if (isProduction) {
       console.log('Socket.IO disabled - running on Vercel');
       return null;
-    }
-    this.socket = io(SOCKET_URL);
+    }    this.socket = io(SOCKET_URL);
 
         // Handle connection errors gracefully
     this.socket.on('connect_error', (error) => {
