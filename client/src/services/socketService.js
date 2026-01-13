@@ -7,7 +7,10 @@ class SocketService {
     this.socket = null;
   }
 
-  connect(userId) {
+  // SOCKET.IO DISABLED FOR PRODUCTION - NOT COMPATIBLE WITH VERCEL
+  return; // Exit immediately - no Socket.IO connection
+  /* COMMENTED OUT - ORIGINAL CODE BELOW
+    connect(userId) {
     this.socket = io(SOCKET_URL);
 
     this.socket.on('connect', () => {
@@ -21,7 +24,8 @@ class SocketService {
     });
 
     return this.socket;
-  }
+  */
+    }
 
   disconnect() {
     if (this.socket) {
