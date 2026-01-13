@@ -87,6 +87,8 @@ const server = app.listen(PORT, () => {
 });
 
 // === Socket.io setup for real-time notifications ===
+// Only enable Socket.IO in local development (not on Vercel)
+if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SOCKET_IO === 'true') {
 
 
 const { Server } = require('socket.io');
@@ -120,6 +122,17 @@ io.on('connection', (socket) => {
     console.log('Socket disconnected:', socket.id);
   });
 });
+   } else {
+  // Socket.IO disabled on Vercel - serverless doesn't support persistent connections
+  console.log('⚠️  Socket.IO disabled (production/serverless environment)');
+  // Create a dummy io object so controllers don't break
+  const dummyIo = {
+    on: () => {},
+    emit: () => {},
+    to: () => ({ emit: () => {} })
+  };
+  app.set('io', dummyIo);
+}
 
 
 /* =========================
