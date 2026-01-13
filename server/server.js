@@ -23,7 +23,7 @@ app.use(cookieParser());
 console.log("Setting up CORS...");
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-indol.vercel.app", "https://gigflow-api.vercel.app", "https://gigflow-frontend-lcjv.onrender.com"]
+    origin: ["http://localhost:5173", "http://localhost:5174", "https://gigflow-frontend-lcjv.onrender.com"]
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
