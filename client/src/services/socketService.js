@@ -12,9 +12,12 @@ class SocketService {
     if (import.meta.env.PROD && !import.meta.env.VITE_ENABLE_SOCKET_IO) {
       console.log('Socket.IO disabled in production');
       return null;
+      // DISABLE Socket.IO in production (Vercel) - check by URL
+    const isProduction = window.location.hostname.includes('vercel.app');
+    if (isProduction) {
+      console.log('Socket.IO disabled - running on Vercel');
+      return null;
     }
-
-
     this.socket = io(SOCKET_URL);
 
         // Handle connection errors gracefully
