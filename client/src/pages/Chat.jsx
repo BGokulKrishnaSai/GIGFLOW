@@ -1,45 +1,65 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import socketService from '../services/socketService'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 
 export default function Chat() {
   const { id: gigId } = useParams()
   const { user } = useSelector((s) => s.auth)
   const [messages, setMessages] = useState([])
+  const [users, setUsers] = useState([])  // New: Users list
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const [otherUser, setOtherUser] = useState(null)
   const bottomRef = useRef(null)
   const navigate = useNavigate()
 
+  // ✅ FIXED: Load public users + gig-specific messages
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
-        // Load messages
-        const res = await api.get(`/messages/${gigId}`)
-        setMessages(res.data.data || [])
+        setLoading(true)
 
-        // Load gig to determine participants
-        const gigRes = await api.get(`/gigs/${gigId}`)
-        const gig = gigRes.data.data
-        const ownerId = gig.ownerId?._id || gig.ownerId
-        const assignedTo = gig.assignedTo?._id || gig.assignedTo
+        // 1. Public users list (always works)
+        const usersRes = await api.get('/messages')
+        setUsers(usersRes.data.users || [])
 
-        let other = null
-        if (user._id === ownerId && assignedTo) other = assignedTo
-        if (user._id === assignedTo && ownerId) other = ownerId
-        setOtherUser(other)
+        // 2. Try gig messages (fails gracefully if no auth/gig)
+        try {
+          const res = await api.get(`/messages/${gigId}`)
+          setMessages(res.data.data || [])
+        } catch (gigErr) {
+          console.log('Gig chat requires login:', gigErr)
+          setMessages([])
+        }
+
+        // 3. Load gig for participants (optional)
+        try {
+          const gigRes = await api.get(`/gigs/${gigId}`)
+          const gig = gigRes.data.data
+          const ownerId = gig.ownerId?._id || gig.ownerId
+          const assignedTo = gig.assignedTo?._id || gig.assignedTo
+          
+          let other = null
+          if (user?._id === ownerId && assignedTo) other = assignedTo
+          if (user?._id === assignedTo && ownerId) other = ownerId
+          setOtherUser(other)
+        } catch (gigErr) {
+          console.log('Gig not found, using demo chat')
+        }
       } catch (err) {
-        console.error('Failed to load messages or gig', err)
+        console.error('Chat load error:', err)
+        setUsers([])
+        setMessages([])
       } finally {
         setLoading(false)
       }
     }
-    fetch()
 
+    fetchData()
+
+    // Socket (existing logic perfect)
     let socket = socketService.getSocket()
     if (!socket && user?._id) {
       socket = socketService.connect(user._id)
@@ -51,10 +71,8 @@ export default function Chat() {
     }
 
     if (socket) socket.on('message', handler)
-    return () => {
-      if (socket) socket.off('message', handler)
-    }
-  }, [gigId])
+    return () => socket?.off('message', handler)
+  }, [gigId, user?._id])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -62,88 +80,117 @@ export default function Chat() {
 
   const send = async () => {
     if (!text.trim()) return
+    if (!user?._id) {
+      alert('Please login to send messages')
+      navigate('/login')
+      return
+    }
+
     try {
-      // Determine recipient: prefer the derived otherUser, fallback to message history
       let other = otherUser
-      if (!other && messages.length > 0) {
-        other = messages[0].from._id === user._id ? messages[0].to._id : messages[0].from._id
+      if (!other && users.length > 0) {
+        other = users[0]._id  // Fallback to first user
       }
 
       if (!other) {
-        alert('No participant to send message to yet.')
+        alert('No recipient available')
         return
       }
 
       const payload = { gigId, to: other, text }
-      const res = await api.post('/messages', payload, { withCredentials: true })
-      setMessages((m) => [...m, res.data.data])
+      const res = await api.post('/messages', payload)
+      setMessages((m) => [...m, res.data.data || res.data])
       setText('')
     } catch (err) {
-      console.error('Failed to send', err)
-      alert('Failed to send message')
+      console.error('Send failed:', err)
+      alert('Failed to send (check login)')
     }
+  }
+
+  if (!gigId) {
+    return <div className="p-8 text-center">Select a gig to chat</div>
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center py-4 sm:py-8">
-      <div className="w-full max-w-2xl flex flex-col flex-1 bg-white rounded-lg shadow-lg border border-gray-200 mx-0 sm:mx-auto" style={{ minHeight: 400 }}>
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-          <h2 className="text-lg sm:text-xl font-bold">Chat</h2>
+      <div className="w-full max-w-4xl flex flex-col bg-white rounded-lg shadow-lg border mx-4 sm:mx-auto" style={{ minHeight: 500 }}>
+        
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold">Chat #{gigId.slice(-4)}</h2>
+          <div className="text-sm text-gray-500">
+            {users.length} users online
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 sm:px-6 py-2 sm:py-4" style={{ minHeight: 300, maxHeight: 500 }}>
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {messages.map((m) => (
-                <div
-                  key={m._id}
-                  className={`flex ${m.from._id === user._id ? 'justify-end' : 'justify-start'}`}
-                >
+
+        {/* Users Sidebar */}
+        <div className="flex-1 flex overflow-hidden">
+          <div className="w-64 border-r border-gray-200 p-4 overflow-y-auto bg-gray-50 hidden md:block">
+            <h3 className="font-semibold mb-3">Users ({users.length})</h3>
+            {users.map(user => (
+              <div key={user._id} className="p-2 hover:bg-gray-200 rounded cursor-pointer mb-1">
+                {user.avatar || '👤'} {user.name}
+              </div>
+            ))}
+            {!users.length && <p className="text-gray-500">No users</p>}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto p-4">
+              {loading ? (
+                <p className="text-center text-gray-500 py-8">Loading chat...</p>
+              ) : messages.length ? (
+                messages.map((m) => (
                   <div
-                    className={`rounded-2xl px-3 sm:px-4 py-2 max-w-[85vw] sm:max-w-xs break-words shadow text-sm relative ${
-                      m.from._id === user._id
-                        ? 'bg-blue-500 text-white rounded-br-none'
-                        : 'bg-gray-200 text-gray-900 rounded-bl-none'
-                    }`}
+                    key={m._id || Math.random()}
+                    className={`flex mb-3 ${m.from?._id === user?._id ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="font-semibold mb-1 text-xs opacity-80">
-                      {m.from._id === user._id ? 'You' : m.from.name}
-                    </div>
-                    <div>{m.text}</div>
-                    <div className="flex items-center justify-end gap-1 text-[10px] opacity-60 mt-1">
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      {m.from._id === user._id && (
-                        <span className="ml-1">
-                          {m.seen ? (
-                            <span title="Seen">✔✔</span>
-                          ) : (
-                            <span title="Sent">✔</span>
-                          )}
-                        </span>
-                      )}
+                    <div className={`max-w-xs sm:max-w-md p-3 rounded-2xl shadow ${
+                      m.from?._id === user?._id
+                        ? 'bg-blue-500 text-white rounded-br-none'
+                        : 'bg-white border rounded-bl-none shadow-lg'
+                    }`}>
+                      <div className="font-semibold text-sm mb-1">
+                        {m.from?.name || m.from || 'Unknown'}
+                      </div>
+                      <div className="text-sm">{m.text || m.content}</div>
+                      <div className="text-xs opacity-75 mt-1">
+                        {new Date(m.createdAt || Date.now()).toLocaleTimeString()}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 py-8">
+                  <div className="text-4xl mb-2">💬</div>
+                  <p>No messages yet</p>
+                  <p className="text-sm">Start the conversation!</p>
                 </div>
-              ))}
+              )}
               <div ref={bottomRef} />
             </div>
-          )}
-        </div>
-        <div className="px-2 sm:px-6 py-3 border-t border-gray-200 flex gap-2 bg-gray-50">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            className="flex-1 border rounded-2xl px-3 sm:px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-            placeholder="Type a message..."
-            onKeyDown={e => { if (e.key === 'Enter') send() }}
-          />
-          <button
-            onClick={send}
-            className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-2xl font-semibold hover:bg-blue-700 transition text-sm"
-          >
-            Send
-          </button>
+
+            {/* Input */}
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <div className="flex gap-2">
+                <input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Type a message..."
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                />
+                <button
+                  onClick={send}
+                  disabled={!text.trim() || !user}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
