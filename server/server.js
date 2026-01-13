@@ -88,8 +88,7 @@ const server = app.listen(PORT, () => {
 
 // === Socket.io setup for real-time notifications ===
 // Only enable Socket.IO in local development (not on Vercel)
-if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SOCKET_IO === 'true') {
-
+if (false) { // Socket.IO disabled - not supported on Vercel serverless
 
 const { Server } = require('socket.io');
 91
