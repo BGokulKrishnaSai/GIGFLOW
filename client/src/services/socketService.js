@@ -1,5 +1,6 @@
-// Socket.IO disabled - Vercel serverless doesn't support persistent connections
-// This service is kept as a stub for future migration to a platform that supports WebSockets
+import { io } from 'socket.io-client';
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class SocketService {
   constructor() {
@@ -7,26 +8,53 @@ class SocketService {
   }
 
   connect(userId) {
-    // Socket.IO disabled for Vercel deployment
-    console.log('Socket.IO is disabled on serverless platform');
-    return null;
+    if (!this.socket) {
+      this.socket = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5
+      });
+
+      this.socket.on('connect', () => {
+        console.log('Socket connected:', this.socket.id);
+        if (userId) {
+          this.socket.emit('join-user-room', userId);
+        }
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+      });
+    }
+    return this.socket;
   }
 
   disconnect() {
-    // No-op
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
   }
 
   getSocket() {
-    return null;
+    return this.socket;
   }
 
-  // Stub methods for future implementation
   emit(event, data) {
-    console.log('Socket.IO disabled:', event, data);
+    if (this.socket) {
+      this.socket.emit(event, data);
+    }
   }
 
   on(event, callback) {
-    // No-op
+    if (this.socket) {
+      this.socket.on(event, callback);
+    }
   }
 }
 
