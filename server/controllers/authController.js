@@ -21,8 +21,8 @@ const setTokenCookie = (res, token) => {
   try {
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,          // ✅ MUST be false on localhost
-      sameSite: "lax",        // ✅ NOT "strict"
+      secure: false,
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   } catch (err) {
@@ -40,7 +40,6 @@ exports.register = async (req, res) => {
     const { name, email, password } = req.body;
     console.log("Request body:", { name, email, password: "****" });
 
-    // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -55,7 +54,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -64,21 +62,19 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create user (password hashed by schema)
     const user = await User.create({
       name,
       email,
       password,
     });
 
-    // Generate token
     const token = generateToken(user._id);
-
-    // Set cookie (won’t crash app)
     setTokenCookie(res, token);
 
+    // ✅ SEND TOKEN IN RESPONSE TOO
     return res.status(201).json({
       success: true,
+      token: token, // ✅ ADD THIS LINE
       data: {
         user: {
           _id: user._id,
@@ -131,8 +127,10 @@ exports.login = async (req, res) => {
     const token = generateToken(user._id);
     setTokenCookie(res, token);
 
+    // ✅ SEND TOKEN IN RESPONSE TOO
     return res.status(200).json({
       success: true,
+      token: token, // ✅ ADD THIS LINE
       data: {
         user: {
           _id: user._id,
