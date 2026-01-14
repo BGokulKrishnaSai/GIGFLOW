@@ -36,8 +36,6 @@ function AppContent() {
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" />} />
           <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" />} />
           <Route path="/gig/:id" element={<GigDetail />} />
-
-          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/post-gig" element={<PostGig />} />
             <Route path="/my-gigs" element={<MyGigs />} />
