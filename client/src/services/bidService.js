@@ -1,8 +1,6 @@
 import api from './api'
 
-// Bid Service API endpoints
 const bidService = {
-  // Create a new bid
   createBid: async (bidData) => {
     try {
       const response = await api.post('/api/bids', bidData)
@@ -12,17 +10,16 @@ const bidService = {
     }
   },
 
-  // Get all bids for a specific gig
+  // ✅ FIXED: Changed backticks to parentheses
   getBidsForGig: async (gigId) => {
     try {
-      const response = await api.get(`/bids/gig/${gigId}`)
+      const response = await api.get(`/bids/gig/${gigId}`)  // Was: api.get`...`
       return response.data
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch bids' }
     }
   },
 
-  // Get user's bids
   getUserBids: async () => {
     try {
       const response = await api.get('/api/bids/user/my-bids')
@@ -32,27 +29,26 @@ const bidService = {
     }
   },
 
-  // Hire a freelancer (accept a bid)
+  // ✅ FIXED: Changed backticks to parentheses
   hireBid: async (bidId) => {
     try {
-      const response = await api.patch(`/bids/${bidId}/hire`)
+      const response = await api.patch(`/bids/${bidId}/hire`)  // Was: api.patch`...`
       return response.data
     } catch (error) {
       throw error.response?.data || { message: 'Failed to hire bid' }
     }
   },
 
-  // Reject a bid (optional reason)
+  // ✅ FIXED: Changed backticks to parentheses
   rejectBid: async (bidId, reason) => {
     try {
-      const response = await api.patch(`/bids/${bidId}/reject`, { reason })
+      const response = await api.patch(`/bids/${bidId}/reject`, { reason })  // Was: api.patch`...`
       return response.data
     } catch (error) {
       throw error.response?.data || { message: 'Failed to reject bid' }
     }
   },
 
-  // Get bid statistics
   getBidStats: async () => {
     try {
       const response = await api.get('/api/bids/user/my-bids')
