@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
 const API_URL = '/api/bids';
+
 export const createBid = createAsyncThunk(
   'bids/createBid',
   async (bidData, { rejectWithValue }) => {
@@ -74,6 +75,7 @@ const bidsSlice = createSlice({
   initialState,
   extraReducers: (builder) => {
     builder
+      // createBid
       .addCase(createBid.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -86,33 +88,64 @@ const bidsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      // getBidsForGig
       .addCase(getBidsForGig.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getBidsForGig.fulfilled, (state, action) => {
         state.loading = false;
         state.gigBids = action.payload;
       })
+      .addCase(getBidsForGig.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // getUserBids
       .addCase(getUserBids.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(getUserBids.fulfilled, (state, action) => {
         state.loading = false;
         state.bids = action.payload;
       })
+      .addCase(getUserBids.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // hireBid
+      .addCase(hireBid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(hireBid.fulfilled, (state, action) => {
-        // Server returns { gig, hiredBid } for hire; support both shapes
-        const payloadBid = action.payload && action.payload.hiredBid ? action.payload.hiredBid : action.payload;
+        state.loading = false;
+        const payloadBid = action.payload?.hiredBid || action.payload;
         const index = state.gigBids.findIndex(b => b._id === payloadBid._id);
         if (index >= 0) {
           state.gigBids[index] = payloadBid;
         }
       })
+      .addCase(hireBid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // rejectBid
+      .addCase(rejectBid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(rejectBid.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.gigBids.findIndex(b => b._id === action.payload._id);
         if (index >= 0) {
           state.gigBids[index] = action.payload;
         }
+      })
+      .addCase(rejectBid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
