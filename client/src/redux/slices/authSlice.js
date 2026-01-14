@@ -52,6 +52,7 @@ export const getMe = createAsyncThunk(
 
 const initialState = {
   user: JSON.parse(localStorage.getItem('user')) || null,
+  token: localStorage.getItem('token') || null, // ✅ ADD TOKEN TO STATE
   isAuthenticated: !!localStorage.getItem('user'),
   loading: false,
   error: null,
@@ -74,9 +75,12 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.token = action.payload.token; // ✅ SAVE TOKEN TO STATE
         state.isAuthenticated = true;
         // Connect to socket for real-time notifications
-        socketService.connect(action.payload.user._id);
+        if (action.payload.user?._id) {
+          socketService.connect(action.payload.user._id);
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -89,6 +93,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.token = action.payload.token; // ✅ SAVE TOKEN TO STATE
         state.isAuthenticated = true;
       })
       .addCase(register.rejected, (state, action) => {
@@ -97,6 +102,7 @@ const authSlice = createSlice({
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
+        state.token = null; // ✅ CLEAR TOKEN
         state.isAuthenticated = false;
         // Disconnect from socket
         socketService.disconnect();
