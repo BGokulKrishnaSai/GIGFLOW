@@ -12,7 +12,7 @@ export default function NotificationCenter() {
   useEffect(() => {
     if (isAuthenticated) {
       // Listen for hire notifications
-      socketService.onHired((data) => {
+      const handleHired = (data) => {
         dispatch(addNotification({
           type: 'hire',
           title: '🎉 Congratulations!',
@@ -20,12 +20,19 @@ export default function NotificationCenter() {
           gig: data.gig,
           bid: data.bid,
         }));
-      });
-    }
+      };
 
-    return () => {
-      socketService.offHired();
-    };
+      const socket = socketService.getSocket();
+      if (socket) {
+        socket.on('hired', handleHired);
+      }
+
+      return () => {
+        if (socket) {
+          socket.off('hired', handleHired);
+        }
+      };
+    }
   }, [isAuthenticated, dispatch]);
 
   const handleMarkAsRead = (id) => {
@@ -37,54 +44,29 @@ export default function NotificationCenter() {
   };
 
   return (
-    <div className="fixed top-20 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 max-w-md">
       <AnimatePresence>
-        {notifications.slice(0, 3).map((notification) => (
+        {notifications.filter(n => !n.read).map((notification) => (
           <motion.div
             key={notification.id}
-            initial={{ opacity: 0, x: 300, scale: 0.3 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 300, scale: 0.3 }}
-            transition={{
-              type: "spring",
-              stiffness: 260,
-              damping: 20
-            }}
-            className={`max-w-sm bg-white rounded-lg shadow-lg border-l-4 ${
-              notification.type === 'hire' ? 'border-green-500' : 'border-blue-500'
-            } p-4 cursor-pointer hover:shadow-xl transition-shadow`}
-            onClick={() => handleMarkAsRead(notification.id)}
+            initial={{ opacity: 0, y: -20, x: 100 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ duration: 0.3 }}
+            className="mb-3 bg-white rounded-lg shadow-lg p-4 border-l-4 border-blue-500"
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-900 text-sm">
-                  {notification.title}
-                </h4>
-                <p className="text-gray-700 text-sm mt-1">
-                  {notification.message}
-                </p>
-                {notification.gig && (
-                  <div className="mt-2 p-2 bg-green-50 rounded text-xs">
-                    <p className="font-medium text-green-800">{notification.gig.title}</p>
-                    <p className="text-green-600">Budget: ₹{notification.gig.budget}</p>
-                  </div>
-                )}
+                <h4 className="font-bold text-gray-900">{notification.title}</h4>
+                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
               </div>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDismiss(notification.id);
-                }}
-                className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => handleDismiss(notification.id)}
+                className="ml-2 text-gray-400 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
-            {!notification.read && (
-              <div className="mt-2 flex justify-end">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-              </div>
-            )}
           </motion.div>
         ))}
       </AnimatePresence>
